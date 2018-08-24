@@ -25,7 +25,7 @@ def enableCORS():
 def mapUnit(query):
 
   def getUnit(unit):
-  
+ 
     if unit == "displacement":
       return "DISP"
     elif unit == "velocity":
@@ -33,20 +33,13 @@ def mapUnit(query):
     elif unit == "acceleration":
       return "ACC"
     else:
-      return None
+      raise ValueError("Invalid output unit requested %s. Expected displacement, velocity, or acceleration" % key)
 
   # Unit was not specified in the query: default
   if "unit" not in query:
     return "VEL"
 
-  # Try mapping the unit
-  unit = getUnit(query["unit"])
-
-  # Invalid unit was specified
-  if unit is None:
-    raise ValueError("Invalid output unit requested %s. Expected displacement, velocity, or acceleration" % key)
-
-  return unit
+  return getUnit(query["unit"])
 
 
 def validateQuery(query):
