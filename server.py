@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from bottle import hook, route, run, request, HTTPError
+from bottle import hook, route, run, request, response, HTTPError, HTTPResponse
 from obspy import read_inventory
 
 def getSamplingRate(stages):
@@ -10,16 +10,17 @@ def getSamplingRate(stages):
     if stage.decimation_input_sample_rate is not None and stage.decimation_factor is not None:
       return stage.decimation_input_sample_rate / stage.decimation_factor
 
-@hook('after_request')
+@hook("after_request")
 def enableCORS():
 
     """
     Enable Cross Origin Policies
     """
 
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'PUT, GET, POST, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+    # Set the headers
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "PUT, GET, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token"
 
 def mapUnit(query):
 
@@ -69,6 +70,7 @@ def index():
   FDSN_STATION_URL = "http://www.orfeus-eu.org/fdsnws/station/1/query"
   F_MIN = 1E-2
 
+  # Conver to a simple dict
   query = dict(request.query)
 
   # Validate sanity of query
@@ -84,38 +86,54 @@ def index():
     return HTTPError(400, exception)
 
   # Read the inventory to ObsPy
-  inventory = read_inventory(FDSN_STATION_URL + "?" + request.query_string + "&level=response")
+  # If this fails just send 204
+  try:
+    inventory = read_inventory(FDSN_STATION_URL + "?" + request.query_string + "&level=response")
+  except Exception as exception:
+    return HTTPResponse(status=204)
 
   # Only return the first channel
-  # TODO add start & end time
   for network in inventory:
     for station in network:
       for channel in station:
 
+        channelIdentifier = ".".join([
+          network.code,
+          station.code,
+          channel.location_code,
+          channel.code
+        ])
+
         # Parameters for deconvolution
         samplingRate = getSamplingRate(channel.response.response_stages)
+
         nFFT = samplingRate / F_MIN
         nyquist = 0.5 * samplingRate
         tSamp = 1.0 / samplingRate
 
-        response, freq = channel.response.get_evalresp_response(
+        # Pass to evalresp routine
+        polar, freq = channel.response.get_evalresp_response(
           t_samp=tSamp,
           nfft=nFFT,
           output=unit
         )
 
         # Convert imag numbers to phase and amplitude
-        amplitude = map(lambda x: np.abs(x), response)
-        phase = map(lambda x: np.angle(x), response)
+        amplitude = np.abs(polar)
+        phase = np.angle(polar)
 
+        # Skip first value (freq. 0)
         return {
           "nyquist": nyquist,
           "samplingRate": samplingRate,
-          "channel": ".".join([network.code, station.code, channel.location_code, channel.code]),
-          "amplitude": amplitude[1:],
-          "phase": phase[1:],
+          "channel": channelIdentifier,
+          "amplitude": list(amplitude[1:]),
+          "phase": list(phase[1:]),
           "frequency": list(freq)[1:]
         }
+
+  # Return empty
+  return HTTPResponse(status=204)
 
 run(
   host=(os.environ.get("SERVICE_HOST") or "0.0.0.0"),
