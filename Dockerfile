@@ -24,7 +24,7 @@ COPY server.py .
 ENV SERVICE_HOST="" \
     SERVICE_PORT=""
 
-# Change user to bottle
+# Expose the port bottle is running under 
 EXPOSE 8080
 
 # Run the server
