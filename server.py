@@ -17,9 +17,6 @@ import numpy as np
 from bottle import hook, route, run, request, response, HTTPError, HTTPResponse
 from obspy import read_inventory
 
-with open("config.json") as configuration:
-  CONFIG = json.load(configuration)
-
 def getSamplingRate(stages):
 
   # Loop over all the stages backwards until sampling rate is found
@@ -58,6 +55,9 @@ def mapUnit(query):
 
   return getUnit(query["unit"])
 
+def roundValues(array):
+
+  return np.around(array, decimals=2)
 
 def validateQuery(query):
 
@@ -128,8 +128,9 @@ def index():
         )
 
         # Convert imag numbers to phase and amplitude
-        amplitude = np.abs(polar)
-        phase = np.angle(polar)
+        freq = roundValues(freq)
+        amplitude = roundValues(np.abs(polar))
+        phase = roundValues(np.angle(polar))
 
         # Skip first value (freq. 0)
         return {
@@ -144,7 +145,12 @@ def index():
   # Return empty
   return HTTPResponse(status=204)
 
-run(
-  host=(os.environ.get("SERVICE_HOST") or "0.0.0.0"),
-  port=(os.environ.get("SERVICE_PORT") or 8080)
-)
+if __name__ == "__main__":
+
+  with open("config.json") as configuration:
+    CONFIG = json.load(configuration)
+
+  run(
+    host=(os.environ.get("SERVICE_HOST") or "0.0.0.0"),
+    port=(os.environ.get("SERVICE_PORT") or 8080)
+  )
