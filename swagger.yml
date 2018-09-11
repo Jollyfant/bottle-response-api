@@ -1,0 +1,102 @@
+swagger: "2.0"
+info:
+  description: "HTTP API for seismic instrument frequency response"
+  version: "1.0.0"
+  title: "Station Instrument Response Webservice"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "koymans@knmi.nl"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+host: "127.0.0.1"
+basePath: "/"
+tags:
+- name: "instrument response"
+  description: "HTTP API for seismic instrument frequency response"
+schemes:
+- "http"
+paths:
+  /:
+    get:
+      tags:
+      - "latency"
+      summary: "Get instrument frequency response"
+      description: "Entrypoint for querying the instrument frequency response"
+      operationId: "getFrequencyResponse"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "network"
+        in: "query"
+        description: "Network code of stream"
+        required: true 
+        type: "array"
+        items:
+          type: "string"
+      - name: "station"
+        in: "query"
+        description: "Station code of stream"
+        required: true 
+        type: "array"
+        items:
+          type: "string"
+      - name: "location"
+        in: "query"
+        description: "Location code of stream"
+        required: true 
+        type: "array"
+        items:
+          type: "string"
+      - name: "channel"
+        in: "query"
+        description: "Channel code of stream"
+        required: true 
+        type: "array"
+        items:
+          type: "string"
+      - name: "units"
+        in: "query"
+        description: "Output units of response (default velocity)"
+        required: false
+        default: "velocity"
+        type: "string"
+        enum:
+          - "velocity"
+          - "displacement"
+          - "acceleration"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/FrequencyResponse"
+        400:
+          description: "Bad Request"
+definitions:
+  FrequencyResponse:
+    type: "object"
+    required:
+    - "frequency"
+    - "phase"
+    - "amplitude"
+    - "nyquist"
+    - "channel"
+    properties:
+      frequency:
+        type: "array"
+        items:
+          type: "float"
+      phase:
+        type: "array"
+        items:
+          type: "float"
+      amplitude:
+        type: "array"
+        items:
+          type: "float"
+      nyquist:
+        type: "float"
+      channel:
+        type: "string"
