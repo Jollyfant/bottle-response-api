@@ -12,5 +12,5 @@ Python Bottle API for getting the instrument frequency response of StationXML th
 ## Plotting using Highcharts
 
 <p align="center">
-![alt text](https://raw.githubusercontent.com/Jollyfant/bottle-response-api/master/chart.png)
+  <img src="https://raw.githubusercontent.com/Jollyfant/bottle-response-api/master/chart.png">
 </p>
