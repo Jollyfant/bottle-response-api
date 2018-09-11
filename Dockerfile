@@ -18,7 +18,7 @@ WORKDIR /home/bottle
 RUN pip install numpy obspy bottle
 
 # install pip and hello-world server requirements
-COPY server.py .
+COPY . .
 
 # Set default environment variables
 ENV SERVICE_HOST="" \

@@ -1,7 +1,24 @@
+"""
+
+  EIDA Instrument Response API
+  Returns frequency response data pulled from FDSNWS.
+
+  Powered by Bottle & Obspy
+
+  Author: Mathijs Koymans, 2018
+  Copyright: ORFEUS Data Center, 2018
+  All Rights Reserved
+
+"""
+
 import os
+import json
 import numpy as np
 from bottle import hook, route, run, request, response, HTTPError, HTTPResponse
 from obspy import read_inventory
+
+with open("config.json") as configuration:
+  CONFIG = json.load(configuration)
 
 def getSamplingRate(stages):
 
@@ -60,7 +77,6 @@ def validateQuery(query):
 def index():
 
   # Constants
-  FDSN_STATION_URL = "http://www.orfeus-eu.org/fdsnws/station/1/query"
   F_MIN = 1E-2
 
   # Conver to a simple dict
@@ -81,7 +97,7 @@ def index():
   # Read the inventory to ObsPy
   # If this fails just send 204
   try:
-    inventory = read_inventory(FDSN_STATION_URL + "?" + request.query_string + "&level=response")
+    inventory = read_inventory(CONFIG["FDSN_STATION_URL"] + "?" + request.query_string + "&level=response")
   except Exception as exception:
     return HTTPResponse(status=204)
 
